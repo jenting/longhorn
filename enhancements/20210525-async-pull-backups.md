@@ -148,12 +148,16 @@ With over 1k backup volumes and over 1k historical volume backups under pretty h
 from longhorn manager to external backup store:
 1. The user can list backup volumes.
 2. The user can list historical volume backups.
-3. When the user deletes a backup volume:
+3. When the user deletes a backup volume on the Longhorn GUI:
    1. list backup volumes, the deleted one does not exist immediately
    2. check the external backup store, the backup volume will be deleted after a while.
-4. When the user deletes a historical volume backup:
-   1. list historical volume backup, the deleted one does not exist immediately
+4. When the user deletes a historical volume backup on the Longhorn GUI:
+   1. list historical volume backups, the deleted one does not exist immediately
    2. check the external backup store, the historical backup will be deleted after a while.
+5. When the user deletes a backup volume on the external backup store manually.
+   After the `backupstore-poll-interval`, list backup volumes, the deleted one does not exist.
+6. When the user deletes a historical volume backup on the external backup store manually.
+   After the `backupstore-poll-interval`, list historical volume backups, the deleted one does not exist immediately.
 
 ### Upgrade strategy
 
@@ -165,5 +169,5 @@ _or_ historical volume backups. We should add this note to the documentation and
 
 ## Note
 
-With this enhancement, the _backups_ customer resource (CR) is updated when the asynchronous timer be triggered.
+With this enhancement, the CR _backups.longhorn.io_ is updated when the asynchronous timer be triggered.
 However, the user might want to trigger it immediately. But currently, we haven't found a good way to let the user force trigger it now.
