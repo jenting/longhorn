@@ -86,9 +86,37 @@ Generally speaking, we want to separate the **list** and **read** command.
 
 ### Implementation Overview
 
-We'll create a new Custom Resource Definition (CRD) called _backups`_ to save pulled backup volumes and its historical volume backups as the Custom Resource (CR).
+We'll create a new Custom Resource Definition (CRD) called `backups.longhorn.io` to save pulled backup volumes metadata 
+and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
+- `metadata.name`: the backup volume name.
+- `spec.name`: the name field inside the backup volume metadata.
+- `spec.size`: the size field inside the backup volume metadata.
+- `spec.labels`: the labels field inside the backup volume metadata.
+- `spec.created`: the created field inside the backup volume metadata.
+- `spec.lastBackupName`: the lastBackupName field inside the backup volume metadata.
+- `spec.lastBackupAt`: the lastBackupAt field inside the backup volume metadata.
+- `spec.dataStored`: the dataStored field inside the backup volume metadata.
+- `spec.messages`: the messages field inside the backup volume metadata.
+- `spec.backingImageName`: the backingImageName field inside the backup volume metadata.
+- `spec.backingImageURL`: the backingImageURL field inside the backup volume metadata.
+- `spec.baseImage`: the baseImage field inside the backup volume metadata.
+- `spec.backups`: a map of volume backups (key is volume backup name, value is the volume backup metadata).
+  - `spec.backups[volumeBackupName].name`: the name field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].url`: the url field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].snapshotName`: the snapshotName field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].snapshotCreated`: the snapshotCreated field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].created`: the created field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].size`: the size field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].labels`: the labels field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].volumeName`: the volumeName field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].volumeSize`: the volumeSize field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].volumeCreated`: the volumeCreated field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].volumeBackingImageName`: the volumeBackingImageName field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].volumeBackingImageURL`: the volumeBackingImageURL field inside a historical volume backup metadata.
+  - `spec.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
+- `status.lastSyncedTime`: records the last time the backup store contents were synced into the cluster.
 
-There is already a backup store monitor that runs as a timer, the timer period is the setting `backupstore-poll-interval`. Within it, it runs:
+There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`. Within it, it runs:
 1. List backup volumes in the cluster custom resource (CR).
 2. List backup volumes from the external backup store.
 3. Find the different backup volumes that are in the external backup store but not in the cluster custom resource (CR).
