@@ -116,16 +116,23 @@ and its historical volume backups metadata as the Custom Resource (CR). For each
   - `spec.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
 - `status.lastSyncedTime`: records the last time the backup store contents were synced into the cluster.
 
-There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`. Within it, it runs:
-1. List backup volumes in the cluster custom resource (CR).
+There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`.
+Within it, it runs:
+1. List backup volumes in the cluster CR `backups.longhorn.io`.
 2. List backup volumes from the external backup store.
-3. Find the different backup volumes that are in the external backup store but not in the cluster custom resource (CR).
-4. Read the different backup volumes' metadata and save it as the custom resource (CR).
-5. Loop all backup volumes, for each backup volume:
-   1. List historical backups in the cluster custom resource
-   2. List historical backups from the external backup store.
-   3. Find the different backups that are in the external backup store but not in the cluster custom resource (CR).
-   4. Read the different backups' metadata and save it as the custom resource (CR).
+3. Find the different backup volumes `backupVolumesToPull` that are in the external backup store and aren't in the cluster CR `backups.longhorn.io`.
+4. Find the different backup volumes `backupVolumesToDelete` that are in the cluster CR `backups.longhorn.io` and aren't in the external backup store.
+5. Loop the `backupVolumesToPull`, read the backup volume metadata from the external backup store, and create a new CR in `backups.longhorn.io`.
+6. Loop the `backupVolumesToDelete`, delete the CR in `backups.longhorn.io`.
+7. Loop all backup volumes in the cluster CR `backups.longhorn.io`, for each backup volume (BV):
+   1. Get the backup volume in the cluster CR `backups.longhorn.io`.
+   2. List historical volume backups in the backup volume CR `backups.longhorn.io` field `spec.backups`.
+   3. List historical volume backups under the backup volume (BV)from the external backup store.
+   4. Find the different volume backups `volumeBackupsToPull` that are in the external backup store and aren't in the backup volume CR field `spec.backups`.
+   5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `spec.backups` and aren't in the external backup store.
+   6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the external backup store, and add to the backup volume CR field `spec.backups`.
+   7. Loop the `volumeBackupsToDelete`, delete the backup volume CR `spec.backups`.
+   8. Update the backup volume (BV) CR `spec.backups`.
 
 For the longhorn manager endpoints:
 - **GET** `/v1/backupvolumes`: read all backup volumes from the cluster custom resource (CR).
