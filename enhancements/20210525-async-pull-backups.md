@@ -87,7 +87,7 @@ Generally speaking, we want to separate the **list** and **read** command.
 
 ### Implementation Overview
 
-We'll create a new Custom Resource Definition (CRD) called `backups.longhorn.io` to save pulled backup volumes metadata 
+We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata 
 and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
 - `metadata.name`: the backup volume name.
 - `spec.name`: the name field inside the backup volume metadata.
@@ -119,15 +119,15 @@ and its historical volume backups metadata as the Custom Resource (CR). For each
 
 There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`.
 Within it, it runs:
-1. List backup volumes in the cluster CR `backups.longhorn.io`.
+1. List backup volumes in the cluster CR `backupvolumes.longhorn.io`.
 2. List backup volumes from the external backup store.
-3. Find the different backup volumes `backupVolumesToPull` that are in the external backup store and aren't in the cluster CR `backups.longhorn.io`.
-4. Find the different backup volumes `backupVolumesToDelete` that are in the cluster CR `backups.longhorn.io` and aren't in the external backup store.
-5. Loop the `backupVolumesToPull`, read the backup volume metadata from the external backup store, and create a new CR in `backups.longhorn.io`.
-6. Loop the `backupVolumesToDelete`, delete the CR in `backups.longhorn.io`.
-7. Loop all backup volumes in the cluster CR `backups.longhorn.io`, for each backup volume (BV):
-   1. Get the backup volume in the cluster CR `backups.longhorn.io`.
-   2. List historical volume backups in the backup volume CR `backups.longhorn.io` field `spec.backups`.
+3. Find the different backup volumes `backupVolumesToPull` that are in the external backup store and aren't in the cluster CR `backupvolumes.longhorn.io`.
+4. Find the different backup volumes `backupVolumesToDelete` that are in the cluster CR `backupvolumes.longhorn.io` and aren't in the external backup store.
+5. Loop the `backupVolumesToPull`, read the backup volume metadata from the external backup store, and create a new CR in `backupvolumes.longhorn.io`.
+6. Loop the `backupVolumesToDelete`, delete the CR in `backupvolumes.longhorn.io`.
+7. Loop all backup volumes in the cluster CR `backupvolumes.longhorn.io`, for each backup volume (BV):
+   1. Get the backup volume in the cluster CR `backupvolumes.longhorn.io`.
+   2. List historical volume backups in the backup volume CR `backupvolumes.longhorn.io` field `spec.backups`.
    3. List historical volume backups under the backup volume (BV)from the external backup store.
    4. Find the different volume backups `volumeBackupsToPull` that are in the external backup store and aren't in the backup volume CR field `spec.backups`.
    5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `spec.backups` and aren't in the external backup store.
