@@ -141,19 +141,19 @@ For the longhorn manager endpoints:
 ### Test plan
 
 With over 1k backup volumes and over 1k historical volume backups under pretty high network latency (700-800ms per operation)
-from longhorn manager to external backup store:
-1. The user can list backup volumes.
-2. The user can list historical volume backups.
+from longhorn manager to the external backup store:
+1. The user can list backup volumes on the Longhorn GUI.
+2. The user can list historical volume backups on the Longhorn GUI.
 3. When the user deletes a backup volume on the Longhorn GUI:
-   1. list backup volumes, the deleted one does not exist immediately
+   1. list backup volumes on the Longhorn GUI, the deleted one does not exist immediately
    2. check the external backup store, the backup volume will be deleted after a while.
 4. When the user deletes a historical volume backup on the Longhorn GUI:
-   1. list historical volume backups, the deleted one does not exist immediately
+   1. list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately
    2. check the external backup store, the historical backup will be deleted after a while.
 5. When the user deletes a backup volume on the external backup store manually.
-   After the `backupstore-poll-interval`, list backup volumes, the deleted one does not exist.
+   After `backupstore-poll-interval` seconds, list backup volumes on the Longhorn GUI, the deleted one does not exist.
 6. When the user deletes a historical volume backup on the external backup store manually.
-   After the `backupstore-poll-interval`, list historical volume backups, the deleted one does not exist immediately.
+   After `backupstore-poll-interval` seconds, list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately.
 
 ### Upgrade strategy
 
