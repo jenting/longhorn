@@ -316,18 +316,23 @@ None.
 
 With over 1k backup volumes and over 1k historical volume backups under pretty high network latency (700-800ms per operation)
 from longhorn manager to the remote backup store:
-1. The user can list backup volumes on the Longhorn GUI.
-2. The user can list historical volume backups on the Longhorn GUI.
-3. When the user deletes a backup volume on the Longhorn GUI:
+1. The user can list backup volumes and list historical volume backups on the Longhorn GUI.
+2. When the user deletes a backup volume on the Longhorn GUI:
    1. list backup volumes on the Longhorn GUI, the deleted one does not exist immediately.
    2. check the remote backup store, the backup volume will be deleted after a while.
-4. When the user deletes a historical volume backup on the Longhorn GUI:
-   1. list historical volume backups on the Longhorn GUI, the deleted one does not exist anymore.
+3. When the user deletes a historical volume backup on the Longhorn GUI:
+   1. list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately.
    2. check the remote backup store, the historical backup will be deleted after a while.
-5. When the user deletes a backup volume on the remote backup store manually.
-   After `backupstore-poll-interval` seconds, list backup volumes on the Longhorn GUI, the deleted one does not exist.
-6. When the user deletes a historical volume backup on the remote backup store manually.
-   After `backupstore-poll-interval` seconds, list historical volume backups on the Longhorn GUI, the deleted one does not exist anymore.
+4. When the user deletes a backup volume or deletes a historical volume backup on the remote backup store manually.
+   After `backupstore-poll-interval` seconds, list backup volumes or list historical volume backups on the Longhorn GUI, the deleted one does not exist anymore.
+5. Create two cluster (clusterA and clusterB) both points to the same remote backup store.
+   1. At cluster A, create a volume and run a recurring backup to the remote backup store.
+   2. At cluster B, after `backupstore-poll-interval` seconds, the user can list backup volumes or list volume backups on the Longhorn GUI.
+   3. At cluster B, create a DR volume from the backup volume.
+   4. At cluster B, check the DR volume `status.LastBackup` and `status.LastBackupAt` be updated periodically.
+   5. At cluster A, delete the backup volume on the GUI.
+   6. At cluster B, after `backupstore-poll-interval` seconds, the deleted backup volume does not exist on the Longhorn GUI.
+   7. At cluster B, the DR volume `status.LastBackup` and `status.LastBackupAt` won't be updated anymore.
 
 ### Upgrade strategy
 
