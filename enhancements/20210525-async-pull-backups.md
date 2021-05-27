@@ -70,16 +70,147 @@ None.
 ### API changes
 
 The current [longhorn/backupstore](https://github.com/longhorn/backupstore) list and inspect command behavior are:
-- `backup ls --volume-only`: List all backup volumes and read it's metadata (`volume.cfg`).
-- `backup ls --volume <volume-name>`: List all historical volume backups and read it's metadata (`backup_backup_<backup-hash>.cfg`).
-- `backup ls --volume <volume-name> --volume-only`: Read a single backup volume metadata (`volume.cfg`).
-- `backup inspect <backup>`: Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
+- `backup ls --volume-only`: List all backup volumes and read it's metadata (`volume.cfg`). For example:
+  ```shell
+  $ backup ls s3://backupbucket@minio/ --volume-only
+  {
+    "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+      "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+      "Size": "2147483648",
+      "Labels": {},
+      "Created": "2021-05-12T00:52:01Z",
+      "LastBackupName": "backup-c5f548b7e86b4b56",
+      "LastBackupAt": "2021-05-17T05:31:01Z",
+      "DataStored": "121634816",
+      "Messages": {}
+    },
+    "pvc-7a8ded68-862d-4abb-a08c-8cf9664dab10": {
+      "Name": "pvc-7a8ded68-862d-4abb-a08c-8cf9664dab10",
+      "Size": "10737418240",
+      "Labels": {},
+      "Created": "2021-05-10T02:43:02Z",
+      "LastBackupName": "backup-432f4d6afa31481f",
+      "LastBackupAt": "2021-05-10T06:04:02Z",
+      "DataStored": "140509184",
+      "Messages": {}
+    }
+  }
+  ```
+- `backup ls --volume <volume-name>`: List all historical volume backups and read it's metadata (`backup_backup_<backup-hash>.cfg`). For example:
+  ```shell
+  $ backup ls s3://backupbucket@minio/ --volume pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+  {
+    "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+      "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+      "Size": "2147483648",
+      "Labels": {}
+      "Created": "2021-05-12T00:52:01Z",
+      "LastBackupName": "backup-c5f548b7e86b4b56",
+      "LastBackupAt": "2021-05-17T05:31:01Z",
+      "DataStored": "121634816",
+      "Messages": {},
+      "Backups": {
+        "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+          "Name": "backup-02224cb26b794e73",
+          "URL": "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+          "SnapshotName": "backup-23c4fd9a",
+          "SnapshotCreated": "2021-05-17T05:23:01Z",
+          "Created": "2021-05-17T05:23:04Z",
+          "Size": "115343360",
+          "Labels": {},
+          "IsIncremental": true,
+          "Messages": null
+         },
+        ...
+        "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+          "Name": "backup-fa78d89827664840",
+          "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+          "SnapshotName": "backup-ac364071",
+          "SnapshotCreated": "2021-05-17T04:42:01Z",
+          "Created": "2021-05-17T04:42:03Z",
+          "Size": "115343360",
+          "Labels": {},
+          "IsIncremental": true,
+          "Messages": null
+        }
+      }
+    }
+  }
+  ```
+- `backup inspect <backup>`: Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
+  ```shell
+  $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+  {
+    "Name": "backup-fa78d89827664840",
+    "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+    "SnapshotName": "backup-ac364071",
+    "SnapshotCreated": "2021-05-17T04:42:01Z",
+    "Created": "2021-05-17T04:42:03Z",
+    "Size": "115343360",
+    "Labels": {},
+    "IsIncremental": true,
+    "VolumeName": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+    "VolumeSize": "2147483648",
+    "VolumeCreated": "2021-05-12T00:52:01Z",
+    "Messages": null
+  }
+  ```
 
 After this enhancement, the [longhorn/backupstore](https://github.com/longhorn/backupstore) list and inspect command behavior are:
-- `backup ls --volume-only`: List all backup volume names.
-- `backup ls --volume <volume-name>`: List all historical volume backup names.
-- `backup ls --volume <volume-name> --volume-only`: Read a single backup volume name.
+- `backup ls --volume-only`: List all backup volume names. For example:
+  ```shell
+  $ backup ls s3://backupbucket@minio/ --volume-only
+  {
+    "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {},
+    "pvc-7a8ded68-862d-4abb-a08c-8cf9664dab10": {}
+  }
+  ```
+- `backup ls --volume <volume-name>`: List all historical volume backup names. For example:
+  ```shell
+  $ backup ls s3://backupbucket@minio/ --volume pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+  {
+    "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+      "Backups": {
+        "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {},
+        ...
+        "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {}
+      }
+    }
+  }
+  ```
 - `backup inspect <metadata-path>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
+  - Read a single backup volume metdata (`volume.cfg`). For example:
+    ```shell
+    $ backup inspect s3://backupbucket@minio/?volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+    {
+      "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+      "Size": "2147483648",
+      "Labels": {},
+      "Created": "2021-05-12T00:52:01Z",
+      "LastBackupName": "backup-c5f548b7e86b4b56",
+      "LastBackupAt": "2021-05-17T05:31:01Z",
+      "DataStored": "121634816",
+      "Messages": {}
+    }
+    ```
+  - Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
+    ```shell
+    $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+    {
+      "Name": "backup-fa78d89827664840",
+      "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+      "SnapshotName": "backup-ac364071",
+      "SnapshotCreated": "2021-05-17T04:42:01Z",
+      "Created": "2021-05-17T04:42:03Z",
+      "Size": "115343360",
+      "Labels": {},
+      "IsIncremental": true,
+      "VolumeName": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+      "VolumeSize": "2147483648",
+      "VolumeCreated": "2021-05-12T00:52:01Z",
+      "Messages": null
+    }
+    ```
 
 Generally speaking, we want to separate the **list** and **read** command.
 
@@ -133,10 +264,10 @@ Within it, it runs:
 For the longhorn manager endpoints:
 - **GET** `/v1/backupvolumes`: read all backup volumes from the cluster custom resource (CR).
 - **GET** `/v1/backupvolumes/{volName}`: read a single backup volume from the cluster custom resource (CR).
-- **DELETE** `/v1/backupvolumes/{volName}`: delete a single backup volume from the cluster custom resource (CR) and also from external backup store.
+- **DELETE** `/v1/backupvolumes/{volName}`: delete a single backup volume from the cluster custom resource (CR) and also from the external backup store.
 - **GET** `/v1/backupvolumes/{volName}?action=backupList`: read a single volume backups from the cluster custom resource (CR).
 - **GET** `/v1/backupvolumes/{volName}?action=backupGet`: read a single volume backup from the cluster custom resource (CR).
-- **DELETE** `/v1/backupvolumes/{volName}?action=backupDelete`: delete a single volume backup from the cluster custom resource (CR) and also from external backup store.
+- **DELETE** `/v1/backupvolumes/{volName}?action=backupDelete`: delete a single volume backup from the cluster custom resource (CR) and also from the external backup store.
 
 ### Test plan
 
