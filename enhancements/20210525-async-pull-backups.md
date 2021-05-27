@@ -298,8 +298,9 @@ from longhorn manager to the remote backup store:
 Before this enhancement, the user might set `backupstore-poll-interval` to `0` to reduce the request to the remote backup store.
 This is majorly for the user who wants to reduce the cost on access AWS S3.
 
-After this enhancement, if the user ever configured the setting `backupstore-poll-interval` to `0`, then the user is unable to list backup volumes
-_or_ historical volume backups. We should add this note to the documentation and the release note.
+After this enhancement, if the user ever configured the setting `backupstore-poll-interval` to `0`, then the user can't see the backup volumes
+on the Longhorn GUI. We'll add a warning message on the Longhorn GUI to notify the user to configure the `backupstore-poll-interval` greater 
+than `0`, so the backup volume controller can synchronous the backup volumes from remote backup store.
 
 ## Note
 
