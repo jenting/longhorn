@@ -90,26 +90,26 @@ Generally speaking, we want to separate the **list** and **read** command.
 We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata 
 and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
 - `metadata.name`: the backup volume name.
-- `spec.name`: the name field inside the backup volume metadata.
-- `spec.size`: the size field inside the backup volume metadata.
-- `spec.labels`: the labels field inside the backup volume metadata.
-- `spec.created`: the created field inside the backup volume metadata.
-- `spec.lastBackupName`: the lastBackupName field inside the backup volume metadata.
-- `spec.lastBackupAt`: the lastBackupAt field inside the backup volume metadata.
-- `spec.dataStored`: the dataStored field inside the backup volume metadata.
-- `spec.messages`: the messages field inside the backup volume metadata.
-- `spec.backups`: a map of volume backups (key is volume backup name, value is the volume backup metadata).
-  - `spec.backups[volumeBackupName].name`: the name field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].url`: the url field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].snapshotName`: the snapshotName field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].snapshotCreated`: the snapshotCreated field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].created`: the created field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].size`: the size field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].labels`: the labels field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].volumeName`: the volumeName field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].volumeSize`: the volumeSize field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].volumeCreated`: the volumeCreated field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
+- `status.name`: the name field inside the backup volume metadata.
+- `status.size`: the size field inside the backup volume metadata.
+- `status.labels`: the labels field inside the backup volume metadata.
+- `status.created`: the created field inside the backup volume metadata.
+- `status.lastBackupName`: the lastBackupName field inside the backup volume metadata.
+- `status.lastBackupAt`: the lastBackupAt field inside the backup volume metadata.
+- `status.dataStored`: the dataStored field inside the backup volume metadata.
+- `status.messages`: the messages field inside the backup volume metadata.
+- `status.backups`: a map of volume backups (key is volume backup name, value is the volume backup metadata).
+  - `status.backups[volumeBackupName].name`: the name field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].url`: the url field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].snapshotName`: the snapshotName field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].snapshotCreated`: the snapshotCreated field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].created`: the created field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].size`: the size field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].labels`: the labels field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].volumeName`: the volumeName field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].volumeSize`: the volumeSize field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].volumeCreated`: the volumeCreated field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
 - `status.lastSyncedTime`: records the last time the backup store contents were synced into the cluster.
 
 There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`.
@@ -122,13 +122,13 @@ Within it, it runs:
 6. Loop the `backupVolumesToDelete`, delete the CR in `backupvolumes.longhorn.io`.
 7. Loop all backup volumes in the cluster CR `backupvolumes.longhorn.io`, for each backup volume (BV):
    1. Get the backup volume in the cluster CR `backupvolumes.longhorn.io`.
-   2. List historical volume backups in the backup volume CR `backupvolumes.longhorn.io` field `spec.backups`.
+   2. List historical volume backups in the backup volume CR `backupvolumes.longhorn.io` field `status.backups`.
    3. List historical volume backups under the backup volume (BV)from the external backup store.
-   4. Find the different volume backups `volumeBackupsToPull` that are in the external backup store and aren't in the backup volume CR field `spec.backups`.
-   5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `spec.backups` and aren't in the external backup store.
-   6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the external backup store, and add to the backup volume CR field `spec.backups`.
-   7. Loop the `volumeBackupsToDelete`, delete the backup volume CR `spec.backups`.
-   8. Update the backup volume (BV) CR `spec.backups`.
+   4. Find the different volume backups `volumeBackupsToPull` that are in the external backup store and aren't in the backup volume CR field `status.backups`.
+   5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `status.backups` and aren't in the external backup store.
+   6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the external backup store, and add to the backup volume CR field `status.backups`.
+   7. Loop the `volumeBackupsToDelete`, delete the backup volume CR `status.backups`.
+   8. Update the backup volume (BV) CR `status.backups`.
 
 For the longhorn manager endpoints:
 - **GET** `/v1/backupvolumes`: read all backup volumes from the cluster custom resource (CR).
