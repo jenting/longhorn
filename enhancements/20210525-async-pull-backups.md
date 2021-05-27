@@ -228,27 +228,27 @@ Generally speaking, we want to separate the **list** and **read** command.
 We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata 
 and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
 - `metadata.name`: the backup volume name.
-- `status.name`: the name field inside the backup volume metadata.
+- `spec.backupStoreURL`: the backup store URL.
+- `spec.pollInterval`: the backup store pull interval.
 - `status.size`: the size field inside the backup volume metadata.
 - `status.labels`: the labels field inside the backup volume metadata.
-- `status.created`: the created field inside the backup volume metadata.
+- `status.createTimestamp`: the created field inside the backup volume metadata.
 - `status.lastBackupName`: the lastBackupName field inside the backup volume metadata.
-- `status.lastBackupAt`: the lastBackupAt field inside the backup volume metadata.
+- `status.lastBackupTimestamp`: the lastBackupAt field inside the backup volume metadata.
 - `status.dataStored`: the dataStored field inside the backup volume metadata.
 - `status.messages`: the messages field inside the backup volume metadata.
 - `status.backups`: a map of volume backups (key is volume backup name, value is the volume backup metadata).
-  - `status.backups[volumeBackupName].name`: the name field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].url`: the url field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].snapshotName`: the snapshotName field inside a historical volume backup metadata.
-  - `status.backups[volumeBackupName].snapshotCreated`: the snapshotCreated field inside a historical volume backup metadata.
-  - `status.backups[volumeBackupName].created`: the created field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].snapshotCreateTimestamp`: the snapshotCreated field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].createTimestamp`: the created field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].size`: the size field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].labels`: the labels field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].volumeName`: the volumeName field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].volumeSize`: the volumeSize field inside a historical volume backup metadata.
-  - `status.backups[volumeBackupName].volumeCreated`: the volumeCreated field inside a historical volume backup metadata.
+  - `status.backups[volumeBackupName].volumeCreateTimestamp`: the volumeCreated field inside a historical volume backup metadata.
   - `status.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
-- `status.lastSyncedTime`: records the last time the backup store contents were synced into the cluster.
+- `status.lastSyncedTimestamp`: records the last time the backup store contents were synced into the cluster.
 
 There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`.
 Within it, it runs:
