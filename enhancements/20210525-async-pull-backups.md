@@ -283,7 +283,7 @@ None.
    
    We'll remove the existed code on watches the change of CR `settings.longorn.io` field `backup-target`, and `backup-target-credential-secret`, and `backupstore-poll-interval`. Also, we'll remove the backup store monitor in the setting controller. The backup store monitor run as a goroutine to 
    periodically pull the latest volume backup name and volume backup timestamp, and updates the `status.LastBackup` and `status.LastBackupAt` to the 
-   CR `volumes.longhorn.io`.
+   CR `volumes.longhorn.io` if it's a DR volume.
    
 3. Create a new controller called `backup_volume_controller`.
    
