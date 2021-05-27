@@ -1,12 +1,18 @@
 # Title
 
-Asynchronous pull backup volumes and historical volume backups into cluster custom resource (CR).
+Final consistent backup volumes with historical volume backups from the remote backup store.
 
 ## Summary
 
-Asynchronous way to pull backup volumes and historical volume backups from the external backup store (S3/NFS) into cluster custom resource (CR).
-This enhancement is to fix the timeout issue when listing backup volumes from the external backup store _or_ listing historical volume backups 
-from the external backup store.
+Currently, Longhorn uses a blocking way for communication with the remote backup store, so there will be some potential voluntary or 
+involuntary factors (ex: network latency) impacting the functions relying on remote backup stores like listing volume backups or even 
+causing further [cascading problems](###related-issues) after the backup store operation.
+
+This enhancement is to propose an asynchronous way to pull backup volumes and historical volume backups from the remote backup store (S3/NFS) 
+then persistently saved via cluster custom resources.
+
+This can resolve the problems above mentioned by asynchronously querying the list of backup volumes and historical volume backups from the remote 
+backup store for final consistent available results. It's also scalable for the costly resources created by the original blocking query operations.
 
 ### Related Issues
 
@@ -19,29 +25,30 @@ from the external backup store.
 
 ### Goals
 
-Decrease the time when the user clicks list backup _or_ list historical volume backups under the circumstances that lots of volume backups _or_ 
-lots of historical volume backups in the external backup store **and** the latency from Longhorn cluster to the external backup store is high.
+Decrease the query latency when listing volume backups _or_ historical volume backups in the circumstances like lots of volume backups, lots of 
+historical volume backups, or the network latency between the Longhorn cluster and the remote backup store.
 
 ### Non-goals [optional]
 
-Automatically adjust the external backup store pull period.
+Automatically adjust the remote backup store pull period.
 
 ## Proposal
 
-Currently, we have a setting `backupstore-poll-interval` to periodically pull the external backup store lastest volume backups within a controller.
-We want to leverage it to pull the external backup volumes and historical volume backups from the external backup store and saves them into the cluster 
-custom resource (CR). Therefore, we'll create a new Custom Resource Definition (CRD) called _backups_ to save the backup volumes and historical volume backups.
+Currently, we have a setting `backupstore-poll-interval` to periodically pull the remote backup store lastest volume backups within a controller.
+We want to leverage it to pull the remote backup volumes and historical volume backups from the remote backup store and saves them into the cluster 
+custom resource (CR). Therefore, we'll create a new Custom Resource Definition (CRD) called _backupvolumes_ to save the backup volumes and historical 
+volume backups.
 
 With this enhancement, we want to:
-1. Pull the backup volumess and historical volume backups that **are in** the external backup store and **aren't in** the cluster CR only.
+1. Pull the backup volumes and historical volume backups that **are in** the remote backup store and **aren't in** the cluster CR only.
 2. Change the [longhorn/backupstore](https://github.com/longhorn/backupstore) list command behavior. Currently, `backup list` command includes
    listing all backup volumes and the historical volume backups and read these metadata.
    We'd like to change the `backup list` behavior to perform list only, but not read the metadata.
 
 ### User Stories
 
-Before this enhancement, when the user's environment under the circumstances that the external backup store has lots of backup volumes _or_ 
-historical volume backups, and the latency between the longhorn manager to the external backup store is high.
+Before this enhancement, when the user's environment under the circumstances that the remote backup store has lots of backup volumes _or_ 
+historical volume backups, and the latency between the longhorn manager to the remote backup store is high.
 Then if the user clicks the `Backup` on the GUI, the user might hit list backup volumes _or_ list historical volume backups timeout issue 
 (the default timeout is 1 min).
 
@@ -49,19 +56,19 @@ We choose to not create a new setting for the user to increase the list timeout 
 Let's say the list backups needs 5 minutes to finish. Even we allow the user to increase the longhorn manager list timeout value, we can't change 
 the browser default timeout value. Furthermore, some browser doesn't allow the user to change default timeout value like Google Chrome.
 
-After this enhancement, when the user's environment under the circumstances that the external backup store has lots of backup volumes _or_ 
-historical volume backups, and the latency between the longhorn manager to the external backup store is high.
-Then if the user clicks the `Backup` on the GUI, the user can list backup volumes _or_ list historical volume backups without timeout issue.
+After this enhancement, when the user's environment under the circumstances that the remote backup store has lots of backup volumes _or_ 
+historical volume backups, and the latency between the longhorn manager to the remote backup store is high.
+Then if the user clicks the `Backup` on the GUI, the user can eventually list backup volumes _or_ list historical volume backups without timeout issue.
 
 #### Story 1
 
-The user environment is under the circumstances that the external backup store has lots of backup volumes and the latency between the longhorn manager 
-to the external backup store is high. Then, the user can list all backup volumes on the GUI.
+The user environment is under the circumstances that the remote backup store has lots of backup volumes and the latency between the longhorn manager 
+to the remote backup store is high. Then, the user can list all backup volumes on the GUI.
 
 #### Story 2
 
-The user environment is under the circumstances that the external backup store has lots of historical volume backups and the latency between the longhorn 
-manager to the external backup store is high. Then, the user can list all historical volume backups on the GUI.
+The user environment is under the circumstances that the remote backup store has lots of historical volume backups and the latency between the longhorn 
+manager to the remote backup store is high. Then, the user can list all historical volume backups on the GUI.
 
 ### User Experience In Detail
 
@@ -246,49 +253,49 @@ and its historical volume backups metadata as the Custom Resource (CR). For each
 There is already a backup store monitor that runs as a timer (inside setting controller), the timer period is the setting `backupstore-poll-interval`.
 Within it, it runs:
 1. List backup volumes in the cluster CR `backupvolumes.longhorn.io`.
-2. List backup volumes from the external backup store.
-3. Find the different backup volumes `backupVolumesToPull` that are in the external backup store and aren't in the cluster CR `backupvolumes.longhorn.io`.
-4. Find the different backup volumes `backupVolumesToDelete` that are in the cluster CR `backupvolumes.longhorn.io` and aren't in the external backup store.
-5. Loop the `backupVolumesToPull`, read the backup volume metadata from the external backup store, and create a new CR in `backupvolumes.longhorn.io`.
+2. List backup volumes from the remote backup store.
+3. Find the different backup volumes `backupVolumesToPull` that are in the remote backup store and aren't in the cluster CR `backupvolumes.longhorn.io`.
+4. Find the different backup volumes `backupVolumesToDelete` that are in the cluster CR `backupvolumes.longhorn.io` and aren't in the remote backup store.
+5. Loop the `backupVolumesToPull`, read the backup volume metadata from the remote backup store, and create a new CR in `backupvolumes.longhorn.io`.
 6. Loop the `backupVolumesToDelete`, delete the CR in `backupvolumes.longhorn.io`.
 7. Loop all backup volumes in the cluster CR `backupvolumes.longhorn.io`, for each backup volume (BV):
    1. Get the backup volume in the cluster CR `backupvolumes.longhorn.io`.
    2. List historical volume backups in the backup volume CR `backupvolumes.longhorn.io` field `status.backups`.
-   3. List historical volume backups under the backup volume (BV)from the external backup store.
-   4. Find the different volume backups `volumeBackupsToPull` that are in the external backup store and aren't in the backup volume CR field `status.backups`.
-   5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `status.backups` and aren't in the external backup store.
-   6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the external backup store, and add to the backup volume CR field `status.backups`.
+   3. List historical volume backups under the backup volume (BV)from the remote backup store.
+   4. Find the different volume backups `volumeBackupsToPull` that are in the remote backup store and aren't in the backup volume CR field `status.backups`.
+   5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `status.backups` and aren't in the remote backup store.
+   6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the remote backup store, and add to the backup volume CR field `status.backups`.
    7. Loop the `volumeBackupsToDelete`, delete the backup volume CR `status.backups`.
    8. Update the backup volume (BV) CR `status.backups`.
 
 For the longhorn manager endpoints:
 - **GET** `/v1/backupvolumes`: read all backup volumes from the cluster custom resource (CR).
 - **GET** `/v1/backupvolumes/{volName}`: read a single backup volume from the cluster custom resource (CR).
-- **DELETE** `/v1/backupvolumes/{volName}`: delete a single backup volume from the cluster custom resource (CR) and also from the external backup store.
+- **DELETE** `/v1/backupvolumes/{volName}`: delete a single backup volume from the cluster custom resource (CR) and also from the remote backup store.
 - **GET** `/v1/backupvolumes/{volName}?action=backupList`: read a single volume backups from the cluster custom resource (CR).
 - **GET** `/v1/backupvolumes/{volName}?action=backupGet`: read a single volume backup from the cluster custom resource (CR).
-- **DELETE** `/v1/backupvolumes/{volName}?action=backupDelete`: delete a single volume backup from the cluster custom resource (CR) and also from the external backup store.
+- **DELETE** `/v1/backupvolumes/{volName}?action=backupDelete`: delete a single volume backup from the cluster custom resource (CR) and also from the remote backup store.
 
 ### Test plan
 
 With over 1k backup volumes and over 1k historical volume backups under pretty high network latency (700-800ms per operation)
-from longhorn manager to the external backup store:
+from longhorn manager to the remote backup store:
 1. The user can list backup volumes on the Longhorn GUI.
 2. The user can list historical volume backups on the Longhorn GUI.
 3. When the user deletes a backup volume on the Longhorn GUI:
    1. list backup volumes on the Longhorn GUI, the deleted one does not exist immediately
-   2. check the external backup store, the backup volume will be deleted after a while.
+   2. check the remote backup store, the backup volume will be deleted after a while.
 4. When the user deletes a historical volume backup on the Longhorn GUI:
    1. list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately
-   2. check the external backup store, the historical backup will be deleted after a while.
-5. When the user deletes a backup volume on the external backup store manually.
+   2. check the remote backup store, the historical backup will be deleted after a while.
+5. When the user deletes a backup volume on the remote backup store manually.
    After `backupstore-poll-interval` seconds, list backup volumes on the Longhorn GUI, the deleted one does not exist.
-6. When the user deletes a historical volume backup on the external backup store manually.
+6. When the user deletes a historical volume backup on the remote backup store manually.
    After `backupstore-poll-interval` seconds, list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately.
 
 ### Upgrade strategy
 
-Before this enhancement, the user might set `backupstore-poll-interval` to `0` to reduce the request to the external backup store.
+Before this enhancement, the user might set `backupstore-poll-interval` to `0` to reduce the request to the remote backup store.
 This is majorly for the user who wants to reduce the cost on access AWS S3.
 
 After this enhancement, if the user ever configured the setting `backupstore-poll-interval` to `0`, then the user is unable to list backup volumes
@@ -296,5 +303,5 @@ _or_ historical volume backups. We should add this note to the documentation and
 
 ## Note
 
-With this enhancement, the CR _backups.longhorn.io_ is updated when the asynchronous timer be triggered.
+With this enhancement, the CR _backupvolumes.longhorn.io_ is updated when the asynchronous timer be triggered.
 However, the user might want to trigger it immediately. But currently, we haven't found a good way to let the user force trigger it now.
