@@ -185,10 +185,10 @@ After this enhancement, the [longhorn/backupstore](https://github.com/longhorn/b
     }
   }
   ```
-- `backup inspect <metadata-path>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
+- `backup inspect <URL> <volume-name> --backup <backup-name>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
   - Read a single backup volume metdata (`volume.cfg`). For example:
     ```shell
-    $ backup inspect s3://backupbucket@minio/?volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+    $ backup inspect s3://backupbucket@minio/ pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
     {
       "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
       "Size": "2147483648",
@@ -202,7 +202,7 @@ After this enhancement, the [longhorn/backupstore](https://github.com/longhorn/b
     ```
   - Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
     ```shell
-    $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+    $ backup inspect s3://backupbucket@minio/ pvc-004d8edb-3a8c-4596-a659-3d00122d3f07 --backup backup-fa78d89827664840
     {
       "Name": "backup-fa78d89827664840",
       "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
