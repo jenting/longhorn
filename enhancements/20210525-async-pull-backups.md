@@ -10,6 +10,7 @@ from the external backup store.
 
 ### Related Issues
 
+- https://github.com/longhorn/longhorn/issues/1761
 - https://github.com/longhorn/longhorn/issues/1955
 - https://github.com/longhorn/longhorn/issues/2536
 - https://github.com/longhorn/longhorn/issues/2543
