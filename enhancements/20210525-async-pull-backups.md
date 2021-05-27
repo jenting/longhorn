@@ -98,9 +98,6 @@ and its historical volume backups metadata as the Custom Resource (CR). For each
 - `spec.lastBackupAt`: the lastBackupAt field inside the backup volume metadata.
 - `spec.dataStored`: the dataStored field inside the backup volume metadata.
 - `spec.messages`: the messages field inside the backup volume metadata.
-- `spec.backingImageName`: the backingImageName field inside the backup volume metadata.
-- `spec.backingImageURL`: the backingImageURL field inside the backup volume metadata.
-- `spec.baseImage`: the baseImage field inside the backup volume metadata.
 - `spec.backups`: a map of volume backups (key is volume backup name, value is the volume backup metadata).
   - `spec.backups[volumeBackupName].name`: the name field inside a historical volume backup metadata.
   - `spec.backups[volumeBackupName].url`: the url field inside a historical volume backup metadata.
@@ -112,8 +109,6 @@ and its historical volume backups metadata as the Custom Resource (CR). For each
   - `spec.backups[volumeBackupName].volumeName`: the volumeName field inside a historical volume backup metadata.
   - `spec.backups[volumeBackupName].volumeSize`: the volumeSize field inside a historical volume backup metadata.
   - `spec.backups[volumeBackupName].volumeCreated`: the volumeCreated field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].volumeBackingImageName`: the volumeBackingImageName field inside a historical volume backup metadata.
-  - `spec.backups[volumeBackupName].volumeBackingImageURL`: the volumeBackingImageURL field inside a historical volume backup metadata.
   - `spec.backups[volumeBackupName].messages`: the messages field inside a historical volume backup metadata.
 - `status.lastSyncedTime`: records the last time the backup store contents were synced into the cluster.
 
