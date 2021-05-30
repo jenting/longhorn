@@ -257,7 +257,7 @@ None.
    We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
    - `metadata.name`: the backup volume name.
    - `spec.backupStoreURL`: the backup store URL.
-   - `spec.pollInterval`: the backup store pull interval.
+   - `spec.pollInterval`: the backup store poll interval.
    - `status.size`: the backup volume size.
    - `status.labels`: the backup volume labels.
    - `status.createTimestamp`: the backup volume creation timestamp.
@@ -269,7 +269,7 @@ None.
      - `status.backups[volumeBackupName].url`: the volume backup url.
      - `status.backups[volumeBackupName].snapshotName`: the snapshot name.
      - `status.backups[volumeBackupName].snapshotCreateTimestamp`: the snapshot creation timestamp.
-     - `status.backups[volumeBackupName].createTimestamp`: the backup creation timestamp.
+     - `status.backups[volumeBackupName].backupCreateTimestamp`: the backup creation timestamp.
      - `status.backups[volumeBackupName].size`: the volume backup size.
      - `status.backups[volumeBackupName].labels`: the volume backup labels.
      - `status.backups[volumeBackupName].isIncremental`: indicates it's a incremental snapshot or not.
