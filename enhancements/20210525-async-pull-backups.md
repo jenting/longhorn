@@ -272,7 +272,6 @@ None.
      - `status.backups[volumeBackupName].backupCreateTimestamp`: the backup creation timestamp.
      - `status.backups[volumeBackupName].size`: the volume backup size.
      - `status.backups[volumeBackupName].labels`: the volume backup labels.
-     - `status.backups[volumeBackupName].isIncremental`: indicates it's a incremental snapshot or not.
      - `status.backups[volumeBackupName].volumeName`: the backup volume name.
      - `status.backups[volumeBackupName].volumeSize`: the backup volume size.
      - `status.backups[volumeBackupName].volumeCreateTimestamp`: the backup volume creation timpstamp.
