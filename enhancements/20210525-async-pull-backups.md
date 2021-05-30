@@ -277,7 +277,7 @@ None.
      - `status.backups[volumeBackupName].volumeSize`: the backup volume size.
      - `status.backups[volumeBackupName].volumeCreateTimestamp`: the backup volume creation timpstamp.
      - `status.backups[volumeBackupName].messages`: the error messages when list volume backup or inspect volume backup metadata.
-     - `status.lastSyncedTimestamp`: records the last time the backup store contents were synced into the cluster.
+   - `status.lastSyncedTimestamp`: records the last time the backup store contents were synced into the cluster.
 
 2. At the existed `setting_controller`.
    
