@@ -50,7 +50,7 @@ cluster custom resource (CR). Therefore, we'll
    - The `backup list` command includes listing all backup volumes and the historical volume backups and read these metadata.
      We'd like to change the `backup list` behavior to perform list only, but not read the metadata.
    - The `backup inspect` command supports read historical volume backup metadata only.
-     We'd like to extend it to support read historical volume backup metadata and also read backup volume metadata.
+     We'd like to add `backup inspect-volume` subcommand to support read backup volume metadata.
 
 ### User Stories
 
@@ -194,48 +194,38 @@ None.
        }
      }
      ```
-   - `backup inspect <metadata-path>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
-     - Read a single backup volume metdata (`volume.cfg`). For example:
-       ```shell
-       $ backup inspect s3://backupbucket@minio/?volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
-       {
-         "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
-         "Size": "2147483648",
-         "Labels": {},
-         "Created": "2021-05-12T00:52:01Z",
-         "LastBackupName": "backup-c5f548b7e86b4b56",
-         "LastBackupAt": "2021-05-17T05:31:01Z",
-         "DataStored": "121634816",
-         "Messages": {}
-       }
-       ```
-     - Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
-       ```shell
-       $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
-       {
-         "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
-         "Size": "2147483648",
-         "Labels": {},
-         "Created": "2021-05-12T00:52:01Z",
-         "LastBackupName": "backup-c5f548b7e86b4b56",
-         "LastBackupAt": "2021-05-17T05:31:01Z",
-         "DataStored": "121634816",
-         "Messages": {},
-         "Backups": {
-           "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
-             "Name": "backup-02224cb26b794e73",
-             "URL": "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
-             "SnapshotName": "backup-23c4fd9a",
-             "SnapshotCreated": "2021-05-17T05:23:01Z",
-             "Created": "2021-05-17T05:23:04Z",
-             "Size": "115343360",
-             "Labels": {},
-             "IsIncremental": true,
-             "Messages": null
-           }
-         }
-       }
-       ```
+   - `backup inspect-volume <volume>`: Read a single backup volume metadata (`volume.cfg`). For example:
+     ```shell
+     $ backup inspect-volume s3://backupbucket@minio/?volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+     {
+       "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+       "Size": "2147483648",
+       "Labels": {},
+       "Created": "2021-05-12T00:52:01Z",
+       "LastBackupName": "backup-c5f548b7e86b4b56",
+       "LastBackupAt": "2021-05-17T05:31:01Z",
+       "DataStored": "121634816",
+       "Messages": {}
+     }
+     ```
+   - `backup inspect <backup>`: Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
+     ```shell
+     $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+     {
+       "Name": "backup-fa78d89827664840",
+       "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+       "SnapshotName": "backup-ac364071",
+       "SnapshotCreated": "2021-05-17T04:42:01Z",
+       "Created": "2021-05-17T04:42:03Z",
+       "Size": "115343360",
+       "Labels": {},
+       "IsIncremental": true,
+       "VolumeName": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+       "VolumeSize": "2147483648",
+       "VolumeCreated": "2021-05-12T00:52:01Z",
+       "Messages": null
+     }
+     ```     
 
    Generally speaking, we want to separate the **list** and **read** command.
 
