@@ -194,10 +194,10 @@ None.
        }
      }
      ```
-   - `backup inspect <URL> <volume-name> --backup <backup-name>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
+   - `backup inspect <metadata-path>`: Read a single backup volume metadata (`volume.cfg`) or read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`).
      - Read a single backup volume metdata (`volume.cfg`). For example:
        ```shell
-       $ backup inspect s3://backupbucket@minio/ pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
+       $ backup inspect s3://backupbucket@minio/?volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
        {
          "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
          "Size": "2147483648",
@@ -211,20 +211,29 @@ None.
        ```
      - Read a single volume's backup metadata (`backup_backup_<backup-hash>.cfg`). For example:
        ```shell
-       $ backup inspect s3://backupbucket@minio/ pvc-004d8edb-3a8c-4596-a659-3d00122d3f07 --backup backup-fa78d89827664840
+       $ backup inspect s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
        {
-         "Name": "backup-fa78d89827664840",
-         "URL": "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
-         "SnapshotName": "backup-ac364071",
-         "SnapshotCreated": "2021-05-17T04:42:01Z",
-         "Created": "2021-05-17T04:42:03Z",
-         "Size": "115343360",
+         "Name": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+         "Size": "2147483648",
          "Labels": {},
-         "IsIncremental": true,
-         "VolumeName": "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
-         "VolumeSize": "2147483648",
-         "VolumeCreated": "2021-05-12T00:52:01Z",
-         "Messages": null
+         "Created": "2021-05-12T00:52:01Z",
+         "LastBackupName": "backup-c5f548b7e86b4b56",
+         "LastBackupAt": "2021-05-17T05:31:01Z",
+         "DataStored": "121634816",
+         "Messages": {},
+         "Backups": {
+           "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
+             "Name": "backup-02224cb26b794e73",
+             "URL": "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07",
+             "SnapshotName": "backup-23c4fd9a",
+             "SnapshotCreated": "2021-05-17T05:23:01Z",
+             "Created": "2021-05-17T05:23:04Z",
+             "Size": "115343360",
+             "Labels": {},
+             "IsIncremental": true,
+             "Messages": null
+           }
+         }
        }
        ```
 
@@ -274,7 +283,7 @@ None.
      - `status.backups[volumeBackupName].labels`: the volume backup labels.
      - `status.backups[volumeBackupName].volumeName`: the backup volume name.
      - `status.backups[volumeBackupName].volumeSize`: the backup volume size.
-     - `status.backups[volumeBackupName].volumeCreateTimestamp`: the backup volume creation timpstamp.
+     - `status.backups[volumeBackupName].volumeCreateTimestamp`: the backup volume creation timestamp.
      - `status.backups[volumeBackupName].messages`: the error messages when list volume backup or inspect volume backup metadata.
    - `status.lastSyncedTimestamp`: records the last time the backup store contents were synced into the cluster.
 
