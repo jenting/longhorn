@@ -1,6 +1,6 @@
 # Title
 
-Final consistent backup volumes with historical volume backups from the remote backup store.
+Final consistent backup volumes with volume snapshot backups from the remote backup store.
 
 ## Summary
 
@@ -8,10 +8,10 @@ Currently, Longhorn uses a blocking way for communication with the remote backup
 involuntary factors (ex: network latency) impacting the functions relying on remote backup stores like listing volume backups or even 
 causing further [cascading problems](###related-issues) after the backup store operation.
 
-This enhancement is to propose an asynchronous way to pull backup volumes and historical volume backups from the remote backup store (S3/NFS) 
+This enhancement is to propose an asynchronous way to pull backup volumes and volume snapshot backups from the remote backup store (S3/NFS) 
 then persistently saved via cluster custom resources.
 
-This can resolve the problems above mentioned by asynchronously querying the list of backup volumes and historical volume backups from the remote 
+This can resolve the problems above mentioned by asynchronously querying the list of backup volumes and volume snapshot backups from the remote 
 backup store for final consistent available results. It's also scalable for the costly resources created by the original blocking query operations.
 
 ### Related Issues
@@ -25,8 +25,8 @@ backup store for final consistent available results. It's also scalable for the 
 
 ### Goals
 
-Decrease the query latency when listing volume backups _or_ historical volume backups in the circumstances like lots of volume backups, lots of 
-historical volume backups, or the network latency between the Longhorn cluster and the remote backup store.
+Decrease the query latency when listing volume backups _or_ volume snapshot backups in the circumstances like lots of volume backups, lots of 
+volume snapshot backups, or the network latency between the Longhorn cluster and the remote backup store.
 
 ### Non-goals [optional]
 
@@ -36,27 +36,27 @@ Automatically adjust the remote backup store pull period.
 
 Currently, we have a setting `backupstore-poll-interval` to periodically pull the remote backup store lastest volume backups within a setting controller.
 
-We want to leverage the same concept but pull the remote backup volumes and historical volume backups from the remote backup store and saves them into the
+We want to leverage the same concept but pull the remote backup volumes and volume snapshot backups from the remote backup store and saves them into the
 cluster custom resource (CR). Therefore, we'll
-1. create a new Custom Resource Definition (CRD) called _backupvolumes_ to save the backup volumes and historical volume backups.
+1. create a new Custom Resource Definition (CRD) called _backupvolumes_ to save the backup volumes and volume snapshot backups.
 2. removes the code of the backup store monitor in the setting controller.
 3. create a new controller called `backup_volume_controller` that is responsible for synchronous the remote backup store backup volumes to the cluster 
    CR _backupvolumes_.
-   1. Pull the backup volumes or historical volume backups to cluster CR (the backup volumes or historical volume backups that **are in** the remote backup 
+   1. Pull the backup volumes or volume snapshot backups to cluster CR (the backup volumes or volume snapshot backups that **are in** the remote backup 
       store and **aren't in** the cluster CR).
-   2. Delete the backup volumes or historical volume backups from the cluster CR (the backup volumes or historical volume backups that **are in** the cluster 
+   2. Delete the backup volumes or volume snapshot backups from the cluster CR (the backup volumes or volume snapshot backups that **are in** the cluster 
       CR and **aren't in** the remote backup store).
 4. Change the [longhorn/backupstore](https://github.com/longhorn/backupstore) list and inspect command behavior.
-   - The `backup list` command includes listing all backup volumes and the historical volume backups and read these metadata.
+   - The `backup list` command includes listing all backup volumes and the volume snapshot backups and read these metadata.
      We'd like to change the `backup list` behavior to perform list only, but not read the metadata.
-   - The `backup inspect` command supports read historical volume backup metadata only.
+   - The `backup inspect` command supports read volume snapshot backup metadata only.
      We'd like to add `backup inspect-volume` subcommand to support read backup volume metadata.
 
 ### User Stories
 
 Before this enhancement, when the user's environment under the circumstances that the remote backup store has lots of backup volumes _or_ 
-historical volume backups, and the latency between the longhorn manager to the remote backup store is high.
-Then if the user clicks the `Backup` on the GUI, the user might hit list backup volumes _or_ list historical volume backups timeout issue 
+volume snapshot backups, and the latency between the longhorn manager to the remote backup store is high.
+Then if the user clicks the `Backup` on the GUI, the user might hit list backup volumes _or_ list volume snapshot backups timeout issue 
 (the default timeout is 1 min).
 
 We choose to not create a new setting for the user to increase the list timeout value is because the browser has its timeout value also.
@@ -64,8 +64,8 @@ Let's say the list backups needs 5 minutes to finish. Even we allow the user to 
 the browser default timeout value. Furthermore, some browser doesn't allow the user to change default timeout value like Google Chrome.
 
 After this enhancement, when the user's environment under the circumstances that the remote backup store has lots of backup volumes _or_ 
-historical volume backups, and the latency between the longhorn manager to the remote backup store is high.
-Then if the user clicks the `Backup` on the GUI, the user can eventually list backup volumes _or_ list historical volume backups without timeout issue.
+volume snapshot backups, and the latency between the longhorn manager to the remote backup store is high.
+Then if the user clicks the `Backup` on the GUI, the user can eventually list backup volumes _or_ list volume snapshot backups without timeout issue.
 
 #### Story 1
 
@@ -74,8 +74,8 @@ to the remote backup store is high. Then, the user can list all backup volumes o
 
 #### Story 2
 
-The user environment is under the circumstances that the remote backup store has lots of historical volume backups and the latency between the longhorn 
-manager to the remote backup store is high. Then, the user can list all historical volume backups on the GUI.
+The user environment is under the circumstances that the remote backup store has lots of volume snapshot backups and the latency between the longhorn 
+manager to the remote backup store is high. Then, the user can list all volume snapshot backups on the GUI.
 
 ### User Experience In Detail
 
@@ -112,7 +112,7 @@ None.
        }
      }
      ```
-   - `backup ls --volume <volume-name>`: List all historical volume backups and read it's metadata (`backup_backup_<backup-hash>.cfg`). For example:
+   - `backup ls --volume <volume-name>`: List all volume snapshot backups and read it's metadata (`backup_backup_<backup-hash>.cfg`). For example:
      ```shell
      $ backup ls s3://backupbucket@minio/ --volume pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
      {
@@ -181,7 +181,7 @@ None.
        "pvc-7a8ded68-862d-4abb-a08c-8cf9664dab10": {}
      }
      ```
-   - `backup ls --volume <volume-name>`: List all historical volume backup names. For example:
+   - `backup ls --volume <volume-name>`: List all volume snapshot backup names. For example:
      ```shell
      $ backup ls s3://backupbucket@minio/ --volume pvc-004d8edb-3a8c-4596-a659-3d00122d3f07
      {
@@ -253,7 +253,7 @@ None.
 
 1. Create a new CRD called `backupvolumes.longhorn.io`.
 
-   We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata and its historical volume backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
+   We'll create a new Custom Resource Definition (CRD) called `backupvolumes.longhorn.io` to save pulled backup volumes metadata and its volume snapshot backups metadata as the Custom Resource (CR). For each backup volume, we'll create a new CR.
    - `metadata.name`: the backup volume name.
    - `spec.backupStoreURL`: the backup store URL.
    - `spec.pollInterval`: the backup store poll interval.
@@ -294,11 +294,11 @@ None.
    6. Loop the `backupVolumesToDelete`, delete the CR in `backupvolumes.longhorn.io`.
    7. Loop all backup volumes in the cluster CR `backupvolumes.longhorn.io`, for each backup volume (BV):
       1. Get the backup volume in the cluster CR `backupvolumes.longhorn.io`.
-      2. List historical volume backups in the backup volume CR `backupvolumes.longhorn.io` field `status.backups`.
-      3. List historical volume backups under the backup volume (BV)from the remote backup store.
+      2. List volume snapshot backups in the backup volume CR `backupvolumes.longhorn.io` field `status.backups`.
+      3. List volume snapshot backups under the backup volume (BV)from the remote backup store.
       4. Find the different volume backups `volumeBackupsToPull` that are in the remote backup store and aren't in the backup volume CR field `status.backups`.
       5. Find the different volume backups `volumeBackupsToDelete` that are in the backup volume CR `status.backups` and aren't in the remote backup store.
-      6. Loop the `volumeBackupsToPull`, read the historical volume backup metadata from the remote backup store, and add to the backup volume CR field `status.backups`.
+      6. Loop the `volumeBackupsToPull`, read the volume snapshot backup metadata from the remote backup store, and add to the backup volume CR field `status.backups`.
       7. Loop the `volumeBackupsToDelete`, delete the backup volume CR `status.backups`.
       8. Update the backup volume (BV) CR `status.backups`.
 
@@ -312,17 +312,17 @@ None.
 
 ### Test plan
 
-With over 1k backup volumes and over 1k historical volume backups under pretty high network latency (700-800ms per operation)
+With over 1k backup volumes and over 1k volume snapshot backups under pretty high network latency (700-800ms per operation)
 from longhorn manager to the remote backup store:
-1. The user can list backup volumes and list historical volume backups on the Longhorn GUI.
+1. The user can list backup volumes and list volume snapshot backups on the Longhorn GUI.
 2. When the user deletes a backup volume on the Longhorn GUI:
    1. list backup volumes on the Longhorn GUI, the deleted one does not exist immediately.
    2. check the remote backup store, the backup volume will be deleted after a while.
-3. When the user deletes a historical volume backup on the Longhorn GUI:
-   1. list historical volume backups on the Longhorn GUI, the deleted one does not exist immediately.
+3. When the user deletes a volume snapshot backup on the Longhorn GUI:
+   1. list volume snapshot backups on the Longhorn GUI, the deleted one does not exist immediately.
    2. check the remote backup store, the historical backup will be deleted after a while.
-4. When the user deletes a backup volume or deletes a historical volume backup on the remote backup store manually.
-   After `backupstore-poll-interval` seconds, list backup volumes or list historical volume backups on the Longhorn GUI, the deleted one does not exist anymore.
+4. When the user deletes a backup volume or deletes a volume snapshot backup on the remote backup store manually.
+   After `backupstore-poll-interval` seconds, list backup volumes or list volume snapshot backups on the Longhorn GUI, the deleted one does not exist anymore.
 5. Create two cluster (clusterA and clusterB) both points to the same remote backup store.
    1. At cluster A, create a volume and run a recurring backup to the remote backup store.
    2. At cluster B, after `backupstore-poll-interval` seconds, the user can list backup volumes or list volume backups on the Longhorn GUI.
