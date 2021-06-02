@@ -187,9 +187,9 @@ None.
      {
        "pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {
          "Backups": {
-           "s3://backupbucket@minio/?backup=backup-02224cb26b794e73\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {},
+           "backup-02224cb26b794e73": {},
            ...
-           "s3://backupbucket@minio/?backup=backup-fa78d89827664840\u0026volume=pvc-004d8edb-3a8c-4596-a659-3d00122d3f07": {}
+           "backup-fa78d89827664840": {}
          }
        }
      }
