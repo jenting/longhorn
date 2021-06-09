@@ -32,7 +32,7 @@ Automatically adjust the remote backup store pull period.
 
 ## Proposal
 
-1. Change the [longhorn/backupstore](https://github.com/longhorn/backupstore) _list_ command behavior, and add two _inspect_ and _head_ commands.
+1. Change the [longhorn/backupstore](https://github.com/longhorn/backupstore) _list_ command behavior, and add two _inspect-volume_ and _head_ commands.
    - The `backup list` command includes listing all backup volumes and the volume snapshot backups and read these metadata.
      We'll change the `backup list` behavior to perform list only, but not read the metadata.
    - Add a new `backup inspect-volume` command to support read backup volume metadata.
@@ -273,7 +273,7 @@ None.
 2. Create a new BackupVolume CRD `backupvolumes.longhorn.io`.
    - `metadata.name`: the backup volume name.
    - `metadata.labels`:
-     - `synced=<true|false>`: this label indicates the backup volume was synced with the remote backup store.   - 
+     - `state=<pull|synced>`: this label indicates the backup volume pull from _or_ was synced the remote backup store.
    - `metadata.ownerReferences`: the owning object.
    - `status.size`: the backup volume size.
    - `status.labels`: the backup volume labels.
@@ -290,7 +290,7 @@ None.
    - `metadata.name`: the volume snapshot backup name.
    - `metadata.labels`:
      - `volume=<backup-volume-name>`: this label indicates which backup volume the volume snapshot backup belongs to.
-     - `synced=<true|false>`: this label indicates the backup was synced with the remote backup store.
+     - `state=<push|pull|synced>`: this label indicates the backup push to _or_ pull from _or_ was synced the remote backup store.
    - `metadata.ownerReferences`: the owning object.
    - `spec.snapshotName`: the volume snapshot name.
    - `spec.labels`: the labels of volume snapshot backup.
@@ -329,39 +329,38 @@ None.
    
    Watches the change of BackupVolume CR `backupvolumes.longhorn.io`. The backup volume controller is responsible to update BackupVolume CR status field, and creating/deleting Backup CR metadata. The reconcile loop steps are:
    - **AddFunc**: 
-     1. List in cluster BackupVolume CRs _with_ label filter `synced=false`. For each BackupVolume CR `metadata.name`:
-        1. Call the longhorn engine to read backup volume's metadata `backup inspect-volume <volume-name>`
-        2. Updates the BackupVolume CR status field according to the backup volumes' metadata
+     1. List in cluster BackupVolume CRs _with_ label filter `state=pull`. For each BackupVolume CR `metadata.name`:
+        1. Call the longhorn engine to read backup volume's metadata `backup inspect-volume <volume-name>`.
+        2. Updates the BackupVolume CR status field according to the backup volumes' metadata.
         3. Updates the BackupVolume CR `status.lastSyncedTimestamp`.
-        4. Change the label from `synced=false` to `synced=true`.
+        4. Change the label to `state=synced`.
      2. Check if `the current timestamp - BackupTarget CR status.lastSyncedTimestamp >= spec.pollInterval > 0`.
         - If no, abort this step.
-        - If yes, list in cluster BackupVolume CRs _without_ the label `synced=false` to get the volume name `volume-name` from the `metadata.name` field. For each BackupVolume CR `metadata.name`:
+        - If yes, list in cluster BackupVolume CRs _with_ the label `state=synced` to get the volume name `volume-name` from the `metadata.name` field. For each BackupVolume CR `metadata.name`:
           1. Call the longhorn engine to get the last modified time `backup head <volume-name>`.
              - If the last modified time == `status.lastModifiedTimestamp`, skip this volume.
              - Otherwise:
                 1. Call the longhorn engine to read all backup volumes' metadata `backup inspect-volume <volume-name>`.
                 2. Updates the BackupVolume CR status field according to the backup volumes' metadata, and also updates the BackupVolume CR `status.lastSyncedTimestamp`.
-                3. Add label `synced=true`.
-                4. Call the longhorn engine to list all the volume snapshot backups `backup ls --volume <volume-name>` from the remote backup store `backupStoreVolumeSnapshotBackups`.
-                5. List in cluster Backup CRs `clusterVolumeSnapshotBackups`.
-                6. Find the difference volume snapshot backups `volumeSnapshotBackupsToPull = backupStoreVolumeSnapshotBackups - clusterVolumeSnapshotBackups` and create Backup CR `metadata.name` + `metadata.ownerReferences.Kind=BackupVolume`.
-                7. Find the difference volume snapshot backups `volumeSnapshotBackupsToDelete = clusterVolumeSnapshotBackups - backupStoreVolumeSnapshotBackups` and delete Backup CR.
+                3. Call the longhorn engine to list all the volume snapshot backups `backup ls --volume <volume-name>` from the remote backup store `backupStoreVolumeSnapshotBackups`.
+                4. List in cluster Backup CRs `clusterVolumeSnapshotBackups`.
+                5. Find the difference volume snapshot backups `volumeSnapshotBackupsToPull = backupStoreVolumeSnapshotBackups - clusterVolumeSnapshotBackups` and create Backup CR `metadata.name` + `metadata.ownerReferences.Kind=BackupVolume` + `metadata.labels["state"]=pull`.
+                6. Find the difference volume snapshot backups `volumeSnapshotBackupsToDelete = clusterVolumeSnapshotBackups - backupStoreVolumeSnapshotBackups` and delete Backup CR.
    - **DeleteFunc**: If the finalizer has been set, delete the backup volume from the remote backup store `backup rm --volume <volume-name> <url>`. After that, remove the finalizer.
 
 8. For the Longhorn manager HTTP endpoints:
    - **POST** `/v1/volumes/{volName}?action=snapshotBackup`:
      1. Generate the backup name.
-     2. Create a new BackupVolume CR if not present with
-        - `metadata.name`
-        - `metadata.ownerReferences.Kind=BackupTarget`
-        - `metadata.Labels["synced"]=false`
-     3. Create a new Backup CR with
-        - `metadata.name`
-        - `metadata.ownerReferences.Kind=BackupVolume`
-        - `metadata.Labels["synced"]=false`
-        - `spec.snapshotName`
-        - `spec.labels`
+     2. Create a new BackupVolume CR if not present with:
+        - `metadata.name`.
+        - `metadata.ownerReferences.Kind=BackupTarget`.
+        - `metadata.Labels["state"]=pull`.
+     3. Create a new Backup CR with:
+        - `metadata.name`.
+        - `metadata.ownerReferences.Kind=BackupVolume`.
+        - `metadata.Labels["state"]=push`.
+        - `spec.snapshotName`.
+        - `spec.labels`.
    - **DELETE** `/v1/backupvolumes/{volName}?action=backupDelete`:
      1. Add the finalizer to the Backup CR with the given backup name.
      2. Delete a Backup CR with the given backup name.
@@ -370,28 +369,28 @@ None.
 
    Watches the change of Backup CR `backups.longhorn.io`. The backup controller is responsible to update the Backup CR status field and create/delete backup to/from the remote backup store. The reconcile loop steps are:
    - **AddFunc**:
-     1. List in cluster Backup CRs _with_ label filter `synced=false`. For each Backup CR `metadata.name`:
+     1. List in cluster Backup CRs _with_ label filter `state=push`. For each Backup CR `metadata.name`:
         1. Call the longhorn engine to perform snapshot backup to the remote backup store.
         2. Call the longhorn engine to read the volume snapshot backup metadata `backup inspect <backup-url>`.
         3. Updates the Backup CR status field according to the volume snapshot backup metadata.
         4. Updates the Backup CR `status.lastSyncedTimestamp`.
-        5. Change the label from `synced=false` to `synced=true`.
+        5. Change the label to `state=synced`.
      2. Check if the `current timestamp - BackupVolume CR status.lastSyncedTimestamp >= spec.pollInterval > 0`.
         - If no, abort the current snapshot backup process.
-        - If yes, list in cluster Backup CRs _without_ label filter `synced=false`. For each Backup CR `metadata.name`:
+        - If yes, list in cluster Backup CRs _with_ label filter `state=pull`. For each Backup CR `metadata.name`:
           - If the Backup CR `status.lastSyncedTimestamp` is not nil, skip it.
           - If the Backup CR `status.lastSyncedTimestamp` is nil.
              1. Call the longhorn engine to read the volume snapshot backup metadata `backup inspect <backup-url>`.
              2. Updates the Backup CR status field according to the volume snapshot backup metadata.
              3. Updates the Backup CR `status.lastSyncedTimestamp`.
-             4. Add label `synced=true`.
+             4. Change the label to `state=synced`.
    - **DeleteFunc**: If the finalizer has been set, delete the backup from the remote backup store `backup rm <backup-url>`. After that, remove the finalizer.
 
 10. For the Longhorn manager HTTP endpoints:
    - **GET** `/v1/backupvolumes`: read all the BackupVolume CRs with label filter `synced=true`.
    - **GET** `/v1/backupvolumes/{volName}`: read a BackupVolume CR with the given volume name with label filter `synced=true`.
    - **GET** `/v1/backupvolumes/{volName}?action=backupList`: read a list of Backup CRs with the label filter `volume=<backup-volume-name>` and `synced=true`.
-   - **GET** `/v1/backupvolumes/{volName}?action=backupGet`: read a Backup CR with the label filter `volume=<backup-volume-name>` and `synced=true`
+   - **GET** `/v1/backupvolumes/{volName}?action=backupGet`: read a Backup CR with the label filter `volume=<backup-volume-name>` and `synced=true`.
 
 ### Test plan
 
