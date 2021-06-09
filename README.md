@@ -1,14 +1,9 @@
 # Longhorn
 
-### Build Status
-* Engine: [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-engine/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-engine) [![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-engine)](https://goreportcard.com/report/github.com/longhorn/longhorn-engine)
-* Manager: [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-manager/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-manager)
-* Instance Manager: [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-instance-manager/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-instance-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-instance-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-instance-manager)
-* Share Manager: [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-share-manager/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-share-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-share-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-share-manager)
-* UI: [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-ui/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-ui)
-* Test: [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-tests/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-tests)
+[![Releases](https://img.shields.io/github/release/longhorn/longhorn/all.svg)](https://github.com/longhorn/longhorn/releases)
+[![Slack](https://img.shields.io/badge/slack-join-brightgreen)](https://slack.cncf.io/)
 
-### Overview
+## Overview
 Longhorn is a distributed block storage system for Kubernetes. Longhorn is cloud native storage because it is built using Kubernetes and container primitives. 
 
 Longhorn is lightweight, reliable, and powerful. You can install Longhorn on an existing Kubernetes cluster with one `kubectl apply` command or using Helm charts. Once Longhorn is installed, it adds persistent volume support to the Kubernetes cluster.
@@ -22,8 +17,20 @@ Longhorn implements distributed block storage using containers and microservices
 5. Automated non-disruptive upgrade. You can upgrade the entire Longhorn software stack without disrupting running volumes!
 6. Intuitive GUI dashboard
 
-You can read more technical details of Longhorn [here](https://longhorn.io/).
+![Longhorn UI](./longhorn-ui.png) 
 
+## Source Code
+Longhorn is 100% open source software. Project source code is spread across a number of repos:
+
+| Component                                                                  | What it does                                                           | Status                                                                                                                                                                                                                                                                                                                                                            |
+| :------------------------------------------------------------------------- | :--------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Backing Image Manager](https://github.com/longhorn/backing-image-manager) | Backing image download, sync, and deletion in a disk                   | [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/backing-image-manager/status.svg)](https://drone-publish.longhorn.io/longhorn/backing-image-manager) [![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/backing-image-manager)](https://goreportcard.com/report/github.com/longhorn/backing-image-manager)              |
+| [Engine](https://github.com/longhorn/longhorn-engine)                      | Core controller/replica logic                                          | [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-engine/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-engine) [![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-engine)](https://goreportcard.com/report/github.com/longhorn/longhorn-engine)                                      |
+| [Instance Manager](https://github.com/longhorn/longhorn-instance-manager)  | Controller/replica instance lifecycle management                       | [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-instance-manager/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-instance-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-instance-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-instance-manager) |
+| [Manager](https://github.com/longhorn/longhorn-manager)                    | Longhorn orchestration, includes CSI driver for Kubernetes             | [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-manager/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-manager)                                   |
+| [Share Manager](https://github.com/longhorn/longhorn-share-manager)        | NFS provisioner that exposes Longhorn volumes as ReadWriteMany volumes | [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-share-manager/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-share-manager)[![Go Report Card](https://goreportcard.com/badge/github.com/longhorn/longhorn-share-manager)](https://goreportcard.com/report/github.com/longhorn/longhorn-share-manager)             |
+| [Test](https://github.com/longhorn/longhorn-test)                          | Integration test                                                       | [![Build Status](http://drone-publish.longhorn.io/api/badges/longhorn/longhorn-tests/status.svg)](http://drone-publish.longhorn.io/longhorn/longhorn-tests)                                                                                                                                                                                                       |
+| [UI](https://github.com/longhorn/longhorn-ui)                              | Dashboard                                                              | [![Build Status](https://drone-publish.longhorn.io/api/badges/longhorn/longhorn-ui/status.svg)](https://drone-publish.longhorn.io/longhorn/longhorn-ui)                                                                                                                                                                                                           |
 
 ## Get Involved
 **Community Meeting and Office Hours**!: Hosted by the core maintainers of Longhorn: 2nd Friday of the every month at 09:00 Pacific Time (PT)/12:00 Eastern Time (ET) on Zoom: http://bit.ly/longhorn-community-meeting. Gcal event: http://bit.ly/longhorn-events
@@ -32,28 +39,11 @@ You can read more technical details of Longhorn [here](https://longhorn.io/).
 
 You can read more about the community and its events here: https://github.com/longhorn/community
 
-## Current status
+## Requirements
 
-The latest release of Longhorn is **v1.1.1**.
+For the installation requirements, refer to the [Longhorn documentation](https://longhorn.io/docs/latest/deploy/install/#installation-requirements).
 
-## Source code
-Longhorn is 100% open source software. Project source code is spread across a number of repos:
-
-| Component                 | What it does                                                           | GitHub repo                                                                                 |
-| :------------------------ | :--------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| Longhorn Engine           | Core controller/replica logic                                          | [longhorn/longhorn-engine](https://github.com/longhorn/longhorn-engine)                     |
-| Longhorn Manager          | Longhorn orchestration, includes CSI driver for Kubernetes             | [longhorn/longhorn-manager](https://github.com/longhorn/longhorn-manager)                   |
-| Longhorn Instance Manager | Controller/replica instance lifecycle management                       | [longhorn/longhorn-instance-manager](https://github.com/longhorn/longhorn-instance-manager) |
-| Longhorn Share Manager    | NFS provisioner that exposes Longhorn volumes as ReadWriteMany volumes | [longhorn/longhorn-share-manager](https://github.com/longhorn/longhorn-share-manager)       |
-| Longhorn UI               | The Longhorn dashboard                                                 | [longhorn/longhorn-ui](https://github.com/longhorn/longhorn-ui)                             |
-
-![Longhorn UI](./longhorn-ui.png)
-
-# Requirements
-
-For the installation requirements, refer to the [Longhorn documentation.](https://longhorn.io/docs/latest/deploy/install/#installation-requirements)
-
-# Install
+## Install
 
 Longhorn can be installed on a Kubernetes cluster in several ways:
 
@@ -61,9 +51,9 @@ Longhorn can be installed on a Kubernetes cluster in several ways:
 - [kubectl](https://longhorn.io/docs/latest/deploy/install/install-with-kubectl/)
 - [Helm](https://longhorn.io/docs/latest/deploy/install/install-with-helm/)
 
-# Documentation
+## Documentation
 
-The official Longhorn documentation is [here.](https://longhorn.io/docs)
+The official Longhorn documentation is [here](https://longhorn.io/).
 
 ## Community
 
@@ -81,6 +71,6 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-### Longhorn is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/)
+## Longhorn is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/)
 
 ![Longhorn is a CNCF Sandbox Project](https://github.com/cncf/artwork/blob/master/other/cncf/horizontal/color/cncf-color.png)
