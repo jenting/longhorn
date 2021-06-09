@@ -393,4 +393,6 @@ than `0`, so the backup volume controller can synchronous the backup volumes fro
 
 ## Note
 
-With this enhancement, the CR _backupvolumes.longhorn.io_ and _backups.longhorn.io_ are updated when the controller resync timer trigger and `the current time - status.lastSyncedTime >= pollInterval`. The user might want to trigger it immediately. However currently, we haven't found a good way to let the user force trigger it now.
+- With this enhancement, the CR _backupvolumes.longhorn.io_ and _backups.longhorn.io_ are updated when the controller resync timer trigger and `the current time - status.lastSyncedTime >= pollInterval`. The user might want to trigger it immediately. However currently, we haven't found a good way to let the user force trigger it now.
+
+- If the user clicks volume backup on a new volume, the Backup CR will be create after backup controller finished volume snapshot backup. However, the BackupVolume CR will delay created after backup volume controller pull the new BackupVolume from the remote backup store. This is because we haven't found a way to from the backup controller to notify the backup volume controller to perform pull the remote backup store to update the BackupVolume status immediately.
