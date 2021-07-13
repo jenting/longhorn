@@ -221,7 +221,7 @@ None.
        "Messages": null
      }
      ```
-   - `backup head <config`: Get the config metadata. For example:
+   - `backup head <config>`: Get the config metadata. For example:
      ```json
      {
        "FileTime": "2021-05-17T04:42:03Z",
@@ -318,7 +318,10 @@ None.
    3. Check if `time.Now() - the default BackupTarget CR status.lastSyncedAt >= spec.pollInterval`.
      - If no, skip the current reconcile process.
      - If yes:
-       1. Call the longhorn engine to list all the backup volumes `backup ls --volume-only` from the remote backup target `backupStoreBackupVolumes`. If the remote backup target is not available, updates the BackupTarget CR `status.available=false` and `status.lastSyncedAt=time.Now()`, then skip the current reconcile process.
+       1. Call the longhorn engine to list all the backup volumes `backup ls --volume-only` from the remote backup target `backupStoreBackupVolumes`. If the remote backup target is not available:
+          1. deletes all BackupVolume CR.
+          2. updates the BackupTarget CR `status.available=false` and `status.lastSyncedAt=time.Now()`
+          3. skip the current reconcile process.
        2. List in cluster BackupVolume CRs `clusterBackupVolumes`.
        3. Find the difference backup volumes `backupVolumesToPull = backupStoreBackupVolumes - clusterBackupVolumes` and create BackupVolume CR `metadata.name` + `spec.forceSync = true`.
        4. Find the difference backup volumes `backupVolumesToDelete = clusterBackupVolumes - backupStoreBackupVolumes` and delete BackupVolume CR.
@@ -335,14 +338,17 @@ None.
 
    Watches the change of BackupVolume CR. The backup volume controller is responsible for deleting Backup CR and deleting backup volume from remote backup target if delete BackupVolume CR event comes in and updating BackupVolume CR status field, and creating/deleting Backup CR. The reconcile loop steps are:
    1. Get the default BackupTarget CR.
-   2. If the delete BackupVolume CR event comes in, delete Backup CR with the given volume name. And delete the backup volume from the remote backup target `backup rm --volume <volume-name> <url>` if the finalizer configured, after that, remove the finalizer.
+   2. If the delete BackupVolume CR event comes in:
+      1. deletes Backup CR with the given volume name.
+      2. deletes the backup volume from the remote backup target `backup rm --volume <volume-name> <url>` if the finalizer present.
+      3. remove the finalizer if present.
    3. Check if BackupVolume CR `spec.forceSync == false` and if the default BackupTarget CR `spec.PollInterval == 0` _or_ `time.Now() - the default BackupTarget CR status.lastSyncedAt < spec.pollInterval`, abort the current reconcile process.
    4. Call the longhorn engine to list all the backups `backup ls --volume <volume-name>` from the remote backup target `backupStoreBackups`.
    5.  List in cluster Backup CRs `clusterBackups`.
    6.  Find the difference backups `backupsToPull = backupStoreBackups - clusterBackups` and create Backup CR `metadata.name` + `metadata.labels["longhornvolume"]=<backup-volume-name>`.
    7.  Find the difference backups `backupsToDelete = clusterBackups - backupStoreBackups` and delete Backup CR.
    8.  Call the longhorn engine to get the backup volume config's last modification time `backup head <volume-config>` and compares to `status.lastModificationTime`. If the config last modification time not changed, abort the current reconcile process.
-   9. Call the longhorn engine to read the backup volumes' config `backup inspect-volume <volume-name>`.
+   9.  Call the longhorn engine to read the backup volumes' config `backup inspect-volume <volume-name>`.
    10. Updates the BackupVolume CR status field according to the backup volumes' config, and also updates the BackupVolume CR `status.lastModificationTime`, `status.lastSyncedAt`.
    11. Updates the BackupVolume CR spec field `spec.forceSync`.
    12. Updates the Volume CR `status.lastBackup` and `status.lastBackupAt`.
@@ -392,7 +398,7 @@ With over 1k backup volumes and over 1k backups under pretty high network latenc
 from longhorn manager to the remote backup target:
 
 - Test basic backup and restore operations.
-   1. The user configures the remote backup target S3 (s3://backupbucket@us-east-1/).
+   1. The user configures the remote backup target URL/credential and poll interval to 5 mins.
    2. The user creates two backups on vol-A and vol-B.
    3. The user can see the backup volume for vol-A and vol-B in Backup GUI.
    4. The user can see the two backups under vol-A and vol-B in Backup GUI.
@@ -400,9 +406,9 @@ from longhorn manager to the remote backup target:
    6. When the user deletes backup volume vol-A on the Longhorn GUI, the backup volume will be deleted after the remote backup target backup volume is deleted, and the backup of vol-A will be deleted also.
    7. The user can see the backup volume for vol-B in Backup GUI.
    8. The user can see two backups under vol-B in Backup GUI.
-   9. The user changes the remote backup target to another S3 (s3://backupbucket@us-east-2/), the user can't see the backup volume and backup of vol-B in Backup GUI.
+   9.  The user changes the remote backup target to another backup target URL/credential, the user can't see the backup volume and backup of vol-B in Backup GUI.
    10. The user configures the `backstore-poll-interval` to 1 minute.
-   11. The user changes the remote backup target to the original one S3 (s3://backupbucket@us-east-1/), after 1 minute later, the user can see the backup volume and backup of vol-B.
+   11. The user changes the remote backup target to the original backup target URL/credential, after 1 minute later, the user can see the backup volume and backup of vol-B.
    12. Create volume from the vol-B backup.
 
 - Test DR volume operations.
@@ -414,6 +420,16 @@ from longhorn manager to the remote backup target:
    6. At cluster A, delete the backup volume on the GUI.
    7. At cluster B, after `backupstore-poll-interval` seconds, the deleted backup volume does not exist on the Longhorn GUI.
    8. At cluster B, the DR volume `status.LastBackup` and `status.LastBackupAt` won't be updated anymore.
+
+- Test Backup Target is not accessible.
+   1. The user configures the remote backup target URL/credential and poll interval to 5 mins.
+   2. The user creates one backup on vol-A.
+   3. Make the Longhorn cluster not able to access the remote backup target. (Change the credential with wrong access/secret key _or_ make the Longhorn manager network disconnect to the remote backup target).
+   4. Within 5 mins the poll interval triggered:
+      1. The BackupVolume CR be deleted.
+      2. The Backup CR be deleted
+      3. The default BackupTarget CR `status.available=false`.
+      4. The default BackupTarget CR `status.lastSyncedAt` be updated.
 
 ### Upgrade strategy
 
