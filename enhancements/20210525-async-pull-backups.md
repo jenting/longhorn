@@ -33,7 +33,7 @@ Decrease the query latency when listing backup volumes _or_ backups in the circu
    - The `backup list` command includes listing all backup volumes and the backups and read these config.
      We'll change the `backup list` behavior to perform list only, but not read the config.
    - Add a new `backup inspect-volume` command to support read backup volume config.
-   - Add a new `backup config-metadata` command to support get config metadata.
+   - Add a new `backup head` command to support get config metadata.
 2. Create a BackupTarget CRD _backuptargets.longhorn.io_ to save the backup target URL, credential secret, and poll interval.
 3. Create a BackupVolume CRD _backupvolumes.longhorn.io_ to save to backup volume config.
 4. Create a Backup CRD _backups.longhorn.io_ to save the backup config.
@@ -221,7 +221,7 @@ None.
        "Messages": null
      }
      ```
-   - `backup config-metadata <config`: Get the config metadata. For example:
+   - `backup head <config`: Get the config metadata. For example:
      ```json
      {
        "FileTime": "2021-05-17T04:42:03Z",
@@ -268,8 +268,8 @@ None.
      name: the backup volume name.
    spec:
      forceSync: to force sync the backup volume or not. (bool)
-     configModificationTime: the backup volume config modification time. (Time)
    status:
+     lastModificationTime: the backup volume config last modification time. (Time)
      size: the backup volume size. (string)
      labels: the backup volume labels. (map[string]string)
      createAt: the backup volume creation time. (string)
@@ -293,8 +293,8 @@ None.
      backingImage: the backing image. (string)
      backingImageURL: the backing image URL. (string)
      forceSync: to force sync the backup volume or not. (bool)
-     configModificationTime: the backup config modification time. (Time)
    status:
+     lastModificationTime: the backup config last modification time. (Time)
      backupCreate: to indicate the backup been created or not. (bool)
      url: the snapshot backup URL. (string)
      snapshotName: the snapshot name. (string)
@@ -341,10 +341,10 @@ None.
    5.  List in cluster Backup CRs `clusterBackups`.
    6.  Find the difference backups `backupsToPull = backupStoreBackups - clusterBackups` and create Backup CR `metadata.name` + `metadata.labels["longhornvolume"]=<backup-volume-name>`.
    7.  Find the difference backups `backupsToDelete = clusterBackups - backupStoreBackups` and delete Backup CR.
-   8.  Call the longhorn engine to get the backup volume config's modification time `backup config-metadata <volume-config>`. If the config metadata not changed, abort the current reconcile process.
+   8.  Call the longhorn engine to get the backup volume config's last modification time `backup head <volume-config>` and compares to `status.lastModificationTime`. If the config last modification time not changed, abort the current reconcile process.
    9. Call the longhorn engine to read the backup volumes' config `backup inspect-volume <volume-name>`.
-   10. Updates the BackupVolume CR status field according to the backup volumes' config, and also updates the BackupVolume CR `status.lastSyncedAt`.
-   11. Updates the BackupVolume CR spec field `spec.forceSync` and `spec.configModificationTime`.
+   10. Updates the BackupVolume CR status field according to the backup volumes' config, and also updates the BackupVolume CR `status.lastModificationTime`, `status.lastSyncedAt`.
+   11. Updates the BackupVolume CR spec field `spec.forceSync`.
    12. Updates the Volume CR `status.lastBackup` and `status.lastBackupAt`.
 
 8.  For the Longhorn manager HTTP endpoints:
@@ -374,10 +374,10 @@ None.
     2.  If the delete Backup CR event comes in and the finalizer configured, delete the backup volume from the remote backup target `backup rm --volume <volume-name> <url>`.Then, updates BackupVolume CR `spec.forceSync=true` to request backup_volume_controller to immediately reconcile the backup volume. After that, remove the finalizer.
     3.  Check if the Backup CR `spec.snapshotName != ""` and `status.backupCreate == false`. If yes, call longhorn engine/replica for backup creation. Then fork a go routine to monitor the backup creation progress. After that, updates Backup CR `status.backupCreate = true`.
     4.  Check if Backup CR `spec.forceSync == false` and if the default BackupTarget CR `spec.PollInterval == 0` _or_ `time.Now() - the default BackupTarget CR status.lastSyncedAt < spec.pollInterval`, abort the current reconcile process.
-    5.  Call the longhorn engine to get the backup config's modification time `backup config-metadata <backup-config>`. If the config metadata not changed, abort the current reconcile process.
+    5.  Call the longhorn engine to get the backup config's last modification time `backup head <backup-config>` and compares to `status.lastModificationTime`. If the config last modification time not changed, abort the current reconcile process.
     6.  Call the longhorn engine to read the backup config `backup inspect <backup-url>`.
-    7.  Updates the Backup CR status field according to the backup config, and also updates the Backup CR `status.lastSyncedAt`.
-    8.  Updates the Backup CR spec field `spec.forceSync` and `spec.configModificationTime`.
+    7.  Updates the Backup CR status field according to the backup config, and also updates the Backup CR `status.lastModificationTime` and `status.lastSyncedAt`.
+    8.  Updates the Backup CR spec field `spec.forceSync`.
 
 10. For the Longhorn manager HTTP endpoints:
 
