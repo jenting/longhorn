@@ -318,10 +318,10 @@ None.
    3. Check if `time.Now() - the default BackupTarget CR status.lastSyncedAt >= spec.pollInterval`.
      - If no, skip the current reconcile process.
      - If yes:
-       1. Call the longhorn engine to list all the backup volumes `backup ls --volume-only` from the remote backup target `backupStoreBackups`. If the remote backup target is not available, updates the BackupTarget CR `status.available=false` and `status.lastSyncedAt=time.Now()`, then skip the current reconcile process.
+       1. Call the longhorn engine to list all the backup volumes `backup ls --volume-only` from the remote backup target `backupStoreBackupVolumes`. If the remote backup target is not available, updates the BackupTarget CR `status.available=false` and `status.lastSyncedAt=time.Now()`, then skip the current reconcile process.
        2. List in cluster BackupVolume CRs `clusterBackupVolumes`.
-       3. Find the difference backup volumes `backupVolumesToPull = backupStoreBackups - clusterBackupVolumes` and create BackupVolume CR `metadata.name` + `spec.forceSync = true`.
-       4. Find the difference backup volumes `backupVolumesToDelete = clusterBackupVolumes - backupStoreBackups` and delete BackupVolume CR.
+       3. Find the difference backup volumes `backupVolumesToPull = backupStoreBackupVolumes - clusterBackupVolumes` and create BackupVolume CR `metadata.name` + `spec.forceSync = true`.
+       4. Find the difference backup volumes `backupVolumesToDelete = clusterBackupVolumes - backupStoreBackupVolumes` and delete BackupVolume CR.
        5. Updates the BackupTarget CR `spec.forceSync = false` if `spec.forceSync = true`.
        6. Updates the BackupTarget CR `status.available=true` and `status.lastSyncedAt = time.Now()`.
 
