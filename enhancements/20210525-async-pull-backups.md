@@ -390,7 +390,8 @@ None.
 
 With over 1k backup volumes and over 1k backups under pretty high network latency (700-800ms per operation)
 from longhorn manager to the remote backup target:
-- Create a single cluster with 2 volumes (vol-A and vol-B).
+
+- Test basic backup and restore operations.
    1. The user configures the remote backup target S3 (s3://backupbucket@us-east-1/).
    2. The user creates two backups on vol-A and vol-B.
    3. The user can see the backup volume for vol-A and vol-B in Backup GUI.
@@ -402,14 +403,17 @@ from longhorn manager to the remote backup target:
    9. The user changes the remote backup target to another S3 (s3://backupbucket@us-east-2/), the user can't see the backup volume and backup of vol-B in Backup GUI.
    10. The user configures the `backstore-poll-interval` to 1 minute.
    11. The user changes the remote backup target to the original one S3 (s3://backupbucket@us-east-1/), after 1 minute later, the user can see the backup volume and backup of vol-B.
-- Create two clusters (cluster-A and cluster-B) both points to the same remote backup target.
-   1. At cluster A, create a volume and run a recurring backup to the remote backup target.
-   2. At cluster B, after `backupstore-poll-interval` seconds, the user can list backup volumes or list volume backups on the Longhorn GUI.
-   3. At cluster B, create a DR volume from the backup volume.
-   4. At cluster B, check the DR volume `status.LastBackup` and `status.LastBackupAt` is updated periodically.
-   5. At cluster A, delete the backup volume on the GUI.
-   6. At cluster B, after `backupstore-poll-interval` seconds, the deleted backup volume does not exist on the Longhorn GUI.
-   7. At cluster B, the DR volume `status.LastBackup` and `status.LastBackupAt` won't be updated anymore.
+   12. Create volume from the vol-B backup.
+
+- Test DR volume operations.
+   1. Create two clusters (cluster-A and cluster-B) both points to the same remote backup target.
+   2. At cluster A, create a volume and run a recurring backup to the remote backup target.
+   3. At cluster B, after `backupstore-poll-interval` seconds, the user can list backup volumes or list volume backups on the Longhorn GUI.
+   4. At cluster B, create a DR volume from the backup volume.
+   5. At cluster B, check the DR volume `status.LastBackup` and `status.LastBackupAt` is updated periodically.
+   6. At cluster A, delete the backup volume on the GUI.
+   7. At cluster B, after `backupstore-poll-interval` seconds, the deleted backup volume does not exist on the Longhorn GUI.
+   8. At cluster B, the DR volume `status.LastBackup` and `status.LastBackupAt` won't be updated anymore.
 
 ### Upgrade strategy
 
